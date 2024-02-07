@@ -1,0 +1,48 @@
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+app = FastAPI()
+
+# In-memory database to store the to-do items
+db = []
+
+
+# Pydantic model for the to-do item
+class TodoItem(BaseModel):
+    title: str
+    description: str = None
+
+# CRUD operations
+
+
+@app.post("/items/", response_model=TodoItem)
+def create_item(item: TodoItem):
+    db.append(item)
+    return item
+
+
+@app.get("/items/", response_model=list[TodoItem])
+def read_items():
+    return db
+
+
+@app.get("/items/{item_id}", response_model=TodoItem)
+def read_item(item_id: int):
+    if item_id < 0 or item_id >= len(db):
+        raise HTTPException(status_code=404, detail="Item not found")
+    return db[item_id]
+
+
+@app.put("/items/{item_id}", response_model=TodoItem)
+def update_item(item_id: int, item: TodoItem):
+    if item_id < 0 or item_id >= len(db):
+        raise HTTPException(status_code=404, detail="Item not found")
+    db[item_id] = item
+    return item
+
+
+@app.delete("/items/{item_id}", response_model=TodoItem)
+def delete_item(item_id: int):
+    if item_id < 0 or item_id >= len(db):
+        raise HTTPException(status_code=404, detail="Item not found")
+    deleted_item = db.pop(item_id)
+    return deleted_item
